@@ -1,0 +1,19 @@
+name: Test specific FGA CLI version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run OpenFGA model test action with specific CLI version
+        id: action
+        uses: .
+        with:
+          test_path: ${{ github.workspace }}/tests/fixtures
+          test_files_pattern: '*.fga.yaml'
+          fga_cli_version: v0.5.0
+      - name: Assert action succeeded with specific CLI version
+        run: |
+          echo "Action completed successfully with specific CLI version"
+          echo "PASS"

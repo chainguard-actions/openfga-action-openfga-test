@@ -1,0 +1,38 @@
+name: Basic Test
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type document
+    relations
+      define viewer: [user]
+      define editor: [user]
+      define owner: [user]
+
+tuples:
+  - user: user:alice
+    relation: viewer
+    object: document:1
+  - user: user:bob
+    relation: editor
+    object: document:1
+
+tests:
+  - name: alice can view document
+    check:
+      - user: user:alice
+        object: document:1
+        assertions:
+          viewer: true
+          editor: false
+          owner: false
+  - name: bob can edit document
+    check:
+      - user: user:bob
+        object: document:1
+        assertions:
+          viewer: false
+          editor: true
+          owner: false

@@ -1,0 +1,25 @@
+name: Custom Pattern Test
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type folder
+    relations
+      define owner: [user]
+      define viewer: [user, folder#viewer]
+
+tuples:
+  - user: user:charlie
+    relation: owner
+    object: folder:root
+
+tests:
+  - name: charlie owns root folder
+    check:
+      - user: user:charlie
+        object: folder:root
+        assertions:
+          owner: true
+          viewer: false

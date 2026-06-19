@@ -1,6 +1,11 @@
 {
   "owner": "openfga",
   "repo": "action-openfga-test",
-  "version": "",
-  "url": "https://github.com/openfga/action-openfga-test"
+  "version": "v0.1.2",
+  "commit_sha": "e89aa8259796cd5ee5c1b1ae7d72c401029cb947",
+  "url": "https://github.com/openfga/action-openfga-test",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
 }
