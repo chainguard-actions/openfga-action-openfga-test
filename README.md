@@ -1,0 +1,1 @@
+# openfga-action-openfga-test
