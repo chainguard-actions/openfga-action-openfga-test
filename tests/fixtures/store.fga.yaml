@@ -1,0 +1,35 @@
+name: Basic Test Store
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type document
+    relations
+      define viewer: [user]
+      define owner: [user]
+
+tuples:
+  - user: user:alice
+    relation: viewer
+    object: document:readme
+
+  - user: user:bob
+    relation: owner
+    object: document:readme
+
+tests:
+  - name: Test viewer access
+    check:
+      - user: user:alice
+        object: document:readme
+        assertions:
+          viewer: true
+          owner: false
+    list_objects:
+      - user: user:alice
+        type: document
+        assertions:
+          viewer:
+            - document:readme
