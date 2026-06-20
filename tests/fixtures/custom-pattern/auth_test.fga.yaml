@@ -1,0 +1,32 @@
+name: Auth Model Tests
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type folder
+    relations
+      define owner: [user]
+      define can_read: [user] or owner
+
+tuples:
+  - user: user:alice
+    relation: owner
+    object: folder:root
+
+tests:
+  - name: Owner can read folder
+    check:
+      - user: user:alice
+        object: folder:root
+        assertions:
+          can_read: true
+          owner: true
+  - name: Non-owner cannot read folder
+    check:
+      - user: user:bob
+        object: folder:root
+        assertions:
+          can_read: false
+          owner: false

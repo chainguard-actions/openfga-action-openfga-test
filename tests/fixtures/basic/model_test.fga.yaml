@@ -1,0 +1,46 @@
+name: Document Model Tests
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type document
+    relations
+      define owner: [user]
+      define editor: [user] or owner
+      define viewer: [user] or editor
+
+tuples:
+  - user: user:alice
+    relation: owner
+    object: document:1
+  - user: user:bob
+    relation: viewer
+    object: document:1
+
+tests:
+  - name: Owner can view document
+    check:
+      - user: user:alice
+        object: document:1
+        assertions:
+          viewer: true
+          editor: true
+          owner: true
+  - name: Viewer can view but not edit
+    check:
+      - user: user:bob
+        object: document:1
+        assertions:
+          viewer: true
+          editor: false
+          owner: false
+  - name: Unknown user cannot access
+    check:
+      - user: user:charlie
+        object: document:1
+        assertions:
+          viewer: false
+          editor: false
+          owner: false

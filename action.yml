@@ -1,0 +1,88 @@
+name: 'OpenFGA Model Testing Action'
+description: 'Github Action for testing your OpenFGA Authorization Model'
+branding:
+  icon: 'align-center'
+  color: 'green'
+inputs:
+  test_path:
+    description: 'Path to the test file or folder'
+    required: false
+    default: '.'
+  test_files_pattern:
+    description: 'Pattern to match the test files'
+    required: false
+    default: '*.fga.yaml'
+  fga_server_url:
+    description: 'The OpenFGA server to test the Authorization Model against. If not provided, the tests will be run using the cli built-in OpenFGA instance.'
+    required: false
+    default: ''
+  fga_server_store_id:
+    description: 'The OpenFGA server store id. Must be provided if fga_server_url is configured.'
+    required: false
+    default: ''
+  fga_api_token:
+    description: 'The api token to use for testing against an OpenFGA server. Ignored if fga_server_url is not provided.'
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
+    - name: Install OpenFGA CLI
+      uses: jaxxstorm/action-install-gh-release@25d5e2dd555cd74f1fab9ac1e6ea117acde2c0c4 # v1.12.0
+      with:
+        repo: openfga/cli
+        cache: enable
+    - uses: chrisdickinson/setup-yq@3d931309f27270ebbafd53f2daee773a82ea1822 # v1.0.1
+      with:
+        yq-version: v4.25.3
+    - name: Run OpenFGA CLI
+      shell: bash
+      env:
+        FGA_SERVER_URL: ${{ inputs.fga_server_url }}
+        FGA_API_TOKEN: ${{ inputs.fga_api_token }}
+        FGA_SERVER_STORE_ID: ${{ inputs.fga_server_store_id }}
+        TEST_PATH: ${{ inputs.test_path }}
+        TEST_FILES_PATTERN: ${{ inputs.test_files_pattern }}
+      run: |
+        while IFS= read -r -d '' test_file
+        do
+          ((test_files_count+=1))
+
+          if [[ -z "$FGA_SERVER_URL" ]]; then
+            echo "Running FGA test file ${test_file}"
+            fga model test --tests "${test_file}"
+          else
+            echo "Running FGA test file ${test_file} against OpenFGA server $FGA_SERVER_URL"
+            fga_token="$FGA_API_TOKEN"
+            test_file_without_model=$(mktemp)
+            yq 'del(.model_file, .model)' "${test_file}" > "${test_file_without_model}"
+            fga model test \
+              --api-url "$FGA_SERVER_URL" \
+              --store-id "$FGA_SERVER_STORE_ID" \
+              ${fga_token:+--api-token "${fga_token}"} \
+              --tests "${test_file_without_model}"
+          fi
+
+        done <   <(find "$TEST_PATH" -name "$TEST_FILES_PATTERN" -print0)
+
+        if [[ ${test_files_count} -eq 0 ]]; then
+          echo "No FGA test file found for path '$TEST_PATH' and pattern '$TEST_FILES_PATTERN'"
+          exit 1
+        fi

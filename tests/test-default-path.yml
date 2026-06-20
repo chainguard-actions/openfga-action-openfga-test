@@ -1,0 +1,16 @@
+name: Test default pattern with explicit path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run OpenFGA model tests with explicit path to fixtures
+        id: action
+        uses: .
+        with:
+          test_path: tests/fixtures/basic
+      - name: Assert tests passed
+        run: |
+          echo "PASS: OpenFGA model tests with default pattern completed successfully"

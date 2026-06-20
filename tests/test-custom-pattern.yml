@@ -1,0 +1,17 @@
+name: Test custom test file pattern
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run OpenFGA model tests with custom pattern
+        id: action
+        uses: .
+        with:
+          test_path: tests/fixtures/custom-pattern
+          test_files_pattern: 'auth_test.fga.yaml'
+      - name: Assert tests passed with custom pattern
+        run: |
+          echo "PASS: OpenFGA model tests with custom pattern completed successfully"
