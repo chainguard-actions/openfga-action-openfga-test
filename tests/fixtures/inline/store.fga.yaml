@@ -1,0 +1,41 @@
+name: InlineModelStore
+model: |
+  model
+    schema 1.1
+  type user
+  type group
+    relations
+      define member: [user]
+  type resource
+    relations
+      define owner: [user]
+      define reader: [user, group#member] or owner
+tests:
+  - name: "group-resource-access"
+    description: "Test group-based resource access"
+    tuples:
+      - user: user:alice
+        relation: owner
+        object: resource:file1
+      - user: user:bob
+        relation: member
+        object: group:engineering
+      - user: group:engineering#member
+        relation: reader
+        object: resource:file2
+    check:
+      - user: user:alice
+        object: resource:file1
+        assertions:
+          reader: true
+          owner: true
+      - user: user:bob
+        object: resource:file2
+        assertions:
+          reader: true
+          owner: false
+      - user: user:charlie
+        object: resource:file1
+        assertions:
+          reader: false
+          owner: false

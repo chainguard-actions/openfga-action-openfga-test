@@ -1,0 +1,42 @@
+name: SimpleDocumentStore
+model_file: ./model.fga
+tests:
+  - name: "basic-document-access"
+    description: "Test basic document access control"
+    tuples:
+      - user: user:alice
+        relation: owner
+        object: document:readme
+      - user: user:bob
+        relation: viewer
+        object: document:readme
+    check:
+      - user: user:alice
+        object: document:readme
+        assertions:
+          can_view: true
+          can_edit: true
+      - user: user:bob
+        object: document:readme
+        assertions:
+          can_view: true
+          can_edit: false
+      - user: user:charlie
+        object: document:readme
+        assertions:
+          can_view: false
+          can_edit: false
+    list_objects:
+      - user: user:alice
+        type: document
+        assertions:
+          can_view:
+            - document:readme
+          can_edit:
+            - document:readme
+      - user: user:bob
+        type: document
+        assertions:
+          can_view:
+            - document:readme
+          can_edit: []
