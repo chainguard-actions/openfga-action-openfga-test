@@ -6,14 +6,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create FGA test file
+        run: |
+          mkdir -p /tmp/fga-versioned
+          cat > /tmp/fga-versioned/model.fga.yaml << 'EOF'
+          name: VersionedTest
+          model: |
+            model
+              schema 1.1
+            type user
+            type group
+              relations
+                define member: [user]
+          tests:
+            - name: "group-membership"
+              tuples:
+                - user: user:alice
+                  relation: member
+                  object: group:engineering
+              check:
+                - user: user:alice
+                  object: group:engineering
+                  assertions:
+                    member: true
+                - user: user:bob
+                  object: group:engineering
+                  assertions:
+                    member: false
+          EOF
+
       - name: Run OpenFGA model test action with specific CLI version
         id: action
         uses: .
         with:
-          test_path: ${{ github.workspace }}/tests/fixtures
+          test_path: /tmp/fga-versioned
           test_files_pattern: '*.fga.yaml'
-          fga_cli_version: v0.5.0
-      - name: Assert action succeeded with specific CLI version
+          fga_cli_version: 'v0.6.1'
+
+      - name: Assert action succeeded
         run: |
-          echo "Action completed successfully with specific CLI version"
-          echo "PASS"
+          echo "PASS: action completed successfully with specific CLI version"

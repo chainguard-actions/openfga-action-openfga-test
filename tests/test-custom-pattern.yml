@@ -1,0 +1,60 @@
+name: Test custom test files pattern
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create FGA test files with custom pattern
+        run: |
+          mkdir -p /tmp/fga-custom
+          # Create a file matching the custom pattern
+          cat > /tmp/fga-custom/mymodel.fga.test.yaml << 'EOF'
+          name: CustomPatternTest
+          model: |
+            model
+              schema 1.1
+            type user
+            type resource
+              relations
+                define reader: [user]
+          tests:
+            - name: "reader-check"
+              tuples:
+                - user: user:carol
+                  relation: reader
+                  object: resource:doc1
+              check:
+                - user: user:carol
+                  object: resource:doc1
+                  assertions:
+                    reader: true
+                - user: user:dave
+                  object: resource:doc1
+                  assertions:
+                    reader: false
+          EOF
+          # Create a file NOT matching the custom pattern (should be ignored)
+          cat > /tmp/fga-custom/ignored.fga.yaml << 'EOF'
+          name: ShouldBeIgnored
+          model: |
+            model
+              schema 1.1
+            type user
+          tests:
+            - name: "empty"
+              check: []
+          EOF
+
+      - name: Run OpenFGA model test action with custom pattern
+        id: action
+        uses: .
+        with:
+          test_path: /tmp/fga-custom
+          test_files_pattern: '*.fga.test.yaml'
+
+      - name: Assert action succeeded
+        run: |
+          echo "PASS: action completed successfully with custom pattern"

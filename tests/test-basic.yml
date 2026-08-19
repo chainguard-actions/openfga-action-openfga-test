@@ -6,13 +6,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create FGA test file
+        run: |
+          mkdir -p /tmp/fga-tests
+          cat > /tmp/fga-tests/test.fga.yaml << 'EOF'
+          name: BasicTest
+          model: |
+            model
+              schema 1.1
+            type user
+            type document
+              relations
+                define owner: [user]
+                define viewer: [user] or owner
+          tests:
+            - name: "basic-access"
+              tuples:
+                - user: user:alice
+                  relation: owner
+                  object: document:1
+              check:
+                - user: user:alice
+                  object: document:1
+                  assertions:
+                    viewer: true
+                    owner: true
+                - user: user:bob
+                  object: document:1
+                  assertions:
+                    viewer: false
+                    owner: false
+          EOF
+
       - name: Run OpenFGA model test action
         id: action
         uses: .
         with:
-          test_path: ${{ github.workspace }}/tests/fixtures
+          test_path: /tmp/fga-tests
           test_files_pattern: '*.fga.yaml'
+
       - name: Assert action succeeded
         run: |
-          echo "Action completed successfully"
-          echo "PASS"
+          echo "PASS: action completed successfully"

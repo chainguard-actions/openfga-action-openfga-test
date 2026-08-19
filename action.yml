@@ -78,17 +78,10 @@ runs:
             fga_token="$FGA_API_TOKEN"
             test_file_without_model=$(mktemp)
             yq 'del(.model_file, .model)' "${test_file}" > "${test_file_without_model}"
-            server_opts_args=()
-            if [ -n "$fga_server_opts" ]; then
-              read -ra server_opts_args <<< "$fga_server_opts"
-            fi
-            token_args=()
-            [ -n "$fga_token" ] && token_args+=(--api-token "$fga_token")
+            fga_args=(--api-url "$FGA_SERVER_URL" --store-id "$FGA_SERVER_STORE_ID")
+            [ -n "${fga_token}" ] && fga_args+=(--api-token "${fga_token}")
             fga model test \
-              "${server_opts_args[@]}" \
-              --api-url "$FGA_SERVER_URL" \
-              --store-id "$FGA_SERVER_STORE_ID" \
-              "${token_args[@]}" \
+              "${fga_args[@]}" \
               --tests "${test_file_without_model}"
           fi
 

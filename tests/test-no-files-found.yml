@@ -6,20 +6,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Run OpenFGA model test action with non-matching pattern
+
+      - name: Create empty directory with no matching files
+        run: |
+          mkdir -p /tmp/fga-empty
+          # Create a file that does NOT match the default pattern
+          echo "not a test file" > /tmp/fga-empty/README.md
+
+      - name: Run OpenFGA model test action expecting failure
         id: action
         uses: .
         with:
-          test_path: ${{ github.workspace }}/tests/fixtures
-          test_files_pattern: '*.nonexistent'
+          test_path: /tmp/fga-empty
+          test_files_pattern: '*.fga.yaml'
         continue-on-error: true
-      - name: Assert action failed when no files found
+
+      - name: Assert action failed with no files found
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" != "failure" ]; then
-            echo "FAIL: expected action to fail when no test files are found, but got outcome '$OUTCOME'"
+            echo "FAIL: expected action to fail when no test files are found, but got outcome: $OUTCOME"
             exit 1
           fi
           echo "PASS: action correctly failed when no test files were found"
