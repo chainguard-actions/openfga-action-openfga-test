@@ -1,4 +1,4 @@
-name: Test basic usage - run FGA model tests
+name: Test custom test path
 on:
   workflow_dispatch:
 
@@ -8,14 +8,14 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Run OpenFGA model test action
+      - name: Run OpenFGA model test action with custom path
         id: action
         uses: .
         with:
-          test_path: tests/fixtures/simple
+          test_path: tests/fixtures/custom-pattern
           test_files_pattern: '*.fga.yaml'
 
       - name: Assert action succeeded
         run: |
-          echo "Action completed successfully"
-          echo "PASS: OpenFGA model tests ran without error"
+          echo "Action completed successfully with custom path"
+          echo "PASS: OpenFGA model tests ran from custom path without error"

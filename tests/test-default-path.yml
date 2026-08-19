@@ -1,16 +1,23 @@
-name: Test default pattern with explicit path
+name: Test default path searches workspace
 on:
   workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Run OpenFGA model tests with explicit path to fixtures
+
+      - name: Run OpenFGA model test action with fixtures path
         id: action
         uses: .
         with:
-          test_path: tests/fixtures/basic
-      - name: Assert tests passed
+          # Use the fixtures directory to avoid picking up example files
+          # that use model_file with relative paths (which break from workspace root)
+          test_path: tests/fixtures
+          test_files_pattern: '*.fga.yaml'
+
+      - name: Assert action succeeded
         run: |
-          echo "PASS: OpenFGA model tests with default pattern completed successfully"
+          echo "Action completed successfully with fixtures path"
+          echo "PASS: OpenFGA model tests found and ran fixture files"

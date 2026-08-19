@@ -1,0 +1,29 @@
+name: SimpleTest
+model: |
+  model
+    schema 1.1
+  type user
+  type document
+    relations
+      define viewer: [user]
+      define editor: [user]
+      define owner: [user]
+
+tuples:
+  - user: user:alice
+    relation: viewer
+    object: document:readme
+
+tests:
+  - name: Test viewer access
+    check:
+      - user: user:alice
+        object: document:readme
+        assertions:
+          viewer: true
+          editor: false
+          owner: false
+      - user: user:bob
+        object: document:readme
+        assertions:
+          viewer: false

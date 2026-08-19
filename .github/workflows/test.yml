@@ -1,0 +1,107 @@
+name: Test Action
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: default values
+        uses: ./
+      - name: specify folder
+        uses: ./
+        with:
+          test_path: ./example
+      - name: single file
+        uses: ./
+        with:
+          test_path: ./example/model.fga.yaml
+
+  test_conditions_support:
+    name: Test conditions support
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test:
+          - openfga_tag: v1.5.3
+            conditions_supported: true
+          - openfga_tag: v1.4.3
+            conditions_supported: true
+          - openfga_tag: v1.3.7
+            conditions_supported: false
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: openfga
+          POSTGRES_PASSWORD: "1234"
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      OPENFGA_DATASTORE_ENGINE: 'postgres'
+      OPENFGA_DATASTORE_URI: 'postgres://openfga:1234@127.0.0.1:5432/openfga'
+      OPENFGA_LOG_LEVEL: debug
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install OpenFGA server ${{ matrix.test.openfga_tag }}
+        uses: jaxxstorm/action-install-gh-release@71d17cb091aa850acb2a1a4cf87258d183eb941b # v1.11.0
+        with:
+          repo: openfga/openfga
+          tag: ${{ matrix.test.openfga_tag }}
+          cache: enable
+      - name: Migrate OpenFGA Database
+        shell: bash
+        run: openfga migrate
+      - name: Start OpenFGA Server
+        shell: bash
+        run: openfga run &
+      - name: Install OpenFGA cli
+        uses: jaxxstorm/action-install-gh-release@71d17cb091aa850acb2a1a4cf87258d183eb941b # v1.11.0
+        with:
+          repo: openfga/cli
+          cache: enable
+      - name: Install jq
+        uses: dcarbone/install-jq-action@8867ddb4788346d7c22b72ea2e2ffe4d514c7bcb # v2
+      - name: Create store with model
+        id: 'store'
+        run: |
+          fga store create --model ./example/model_with_conditions.fga > store_response.json
+          cat store_response.json
+          store_id=$(jq -r '.store.id' store_response.json)
+          echo "store_id=${store_id}" >> $GITHUB_OUTPUT
+      - name: Run OpenFGA CLI Tests
+        id: 'tests'
+        uses: ./
+        continue-on-error: true
+        with:
+          test_path: ./example/model_with_conditions.fga.yaml
+          fga_server_url: 'http://localhost:8080'
+          fga_server_store_id: ${{ steps.store.outputs.store_id }}
+      - name: Assert expected results
+        env:
+          CONDITIONS_SUPPORTED: ${{ matrix.test.conditions_supported }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+          OPENFGA_TAG: ${{ matrix.test.openfga_tag }}
+        run: |
+          if [ "$CONDITIONS_SUPPORTED" == "true" ] && [ "$TESTS_OUTCOME" == "failure" ]
+          then
+            echo "$OPENFGA_TAG is expected to support conditions but tests failed"
+            exit 1
+          fi
+          if [ "$CONDITIONS_SUPPORTED" == "false" ] && [ "$TESTS_OUTCOME" == "success" ]
+          then
+            echo "$OPENFGA_TAG is expected to not support conditions but tests passed"
+            exit 1
+          fi

@@ -1,0 +1,27 @@
+name: CustomPatternTest
+model: |
+  model
+    schema 1.1
+  type user
+  type folder
+    relations
+      define can_read: [user]
+      define can_write: [user]
+
+tuples:
+  - user: user:charlie
+    relation: can_read
+    object: folder:shared
+
+tests:
+  - name: Test folder access
+    check:
+      - user: user:charlie
+        object: folder:shared
+        assertions:
+          can_read: true
+          can_write: false
+      - user: user:dave
+        object: folder:shared
+        assertions:
+          can_read: false

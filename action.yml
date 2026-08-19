@@ -56,8 +56,8 @@ runs:
       shell: bash
       env:
         FGA_SERVER_URL: ${{ inputs.fga_server_url }}
-        FGA_API_TOKEN: ${{ inputs.fga_api_token }}
         FGA_SERVER_STORE_ID: ${{ inputs.fga_server_store_id }}
+        FGA_API_TOKEN: ${{ inputs.fga_api_token }}
         TEST_PATH: ${{ inputs.test_path }}
         TEST_FILES_PATTERN: ${{ inputs.test_files_pattern }}
       run: |
@@ -74,9 +74,10 @@ runs:
             test_file_without_model=$(mktemp)
             yq 'del(.model_file, .model)' "${test_file}" > "${test_file_without_model}"
             fga model test \
+              ${fga_server_opts} \
               --api-url "$FGA_SERVER_URL" \
               --store-id "$FGA_SERVER_STORE_ID" \
-              ${fga_token:+--api-token "${fga_token}"} \
+              ${fga_token:+--api-token "$fga_token"} \
               --tests "${test_file_without_model}"
           fi
 
