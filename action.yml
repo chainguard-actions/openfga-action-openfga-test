@@ -60,34 +60,35 @@ runs:
     - name: Run OpenFGA CLI
       shell: bash
       env:
-        FGA_SERVER_URL: ${{ inputs.fga_server_url }}
-        FGA_API_TOKEN: ${{ inputs.fga_api_token }}
-        FGA_SERVER_STORE_ID: ${{ inputs.fga_server_store_id }}
-        TEST_PATH: ${{ inputs.test_path }}
-        TEST_FILES_PATTERN: ${{ inputs.test_files_pattern }}
+        INPUT_FGA_SERVER_URL: ${{ inputs.fga_server_url }}
+        INPUT_FGA_API_TOKEN: ${{ inputs.fga_api_token }}
+        INPUT_FGA_SERVER_STORE_ID: ${{ inputs.fga_server_store_id }}
+        INPUT_TEST_PATH: ${{ inputs.test_path }}
+        INPUT_TEST_FILES_PATTERN: ${{ inputs.test_files_pattern }}
       run: |-
         while IFS= read -r -d '' test_file
         do
           ((test_files_count+=1))
 
-          if [[ -z "$FGA_SERVER_URL" ]]; then
+          if [[ -z "$INPUT_FGA_SERVER_URL" ]]; then
             echo "Running FGA test file ${test_file}"
             fga model test --tests "${test_file}"
           else
-            echo "Running FGA test file ${test_file} against OpenFGA server $FGA_SERVER_URL"
-            fga_token="$FGA_API_TOKEN"
-            test_file_without_model=$(mktemp)
+            echo "Running FGA test file ${test_file} against OpenFGA server $INPUT_FGA_SERVER_URL"
+            fga_token="$INPUT_FGA_API_TOKEN"
+            test_file_without_model=mktemp
             yq 'del(.model_file, .model)' "${test_file}" > "${test_file_without_model}"
-            fga_args=(--api-url "$FGA_SERVER_URL" --store-id "$FGA_SERVER_STORE_ID")
-            [ -n "${fga_token}" ] && fga_args+=(--api-token "${fga_token}")
             fga model test \
-              "${fga_args[@]}" \
+              ${fga_server_opts} \
+              --api-url "$INPUT_FGA_SERVER_URL" \
+              --store-id "$INPUT_FGA_SERVER_STORE_ID" \
+              ${fga_token:+--api-token "$fga_token"} \
               --tests "${test_file_without_model}"
           fi
 
-        done <   <(find "$TEST_PATH" -name "$TEST_FILES_PATTERN" -print0)
+        done <   <(find "$INPUT_TEST_PATH" -name "$INPUT_TEST_FILES_PATTERN" -print0)
 
         if [[ ${test_files_count} -eq 0 ]]; then
-          echo "No FGA test file found for path '$TEST_PATH' and pattern '$TEST_FILES_PATTERN'"
+          echo "No FGA test file found for path '$INPUT_TEST_PATH' and pattern '$INPUT_TEST_FILES_PATTERN'"
           exit 1
         fi
