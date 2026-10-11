@@ -1,0 +1,19 @@
+name: Custom Pattern Model Test
+model: |
+  model
+    schema 1.1
+  type user
+  type document
+    relations
+      define viewer: [user]
+tuples:
+  - user: user:alice
+    relation: viewer
+    object: document:readme
+tests:
+  - name: Test alice can view readme
+    check:
+      - user: user:alice
+        object: document:readme
+        assertions:
+          viewer: true

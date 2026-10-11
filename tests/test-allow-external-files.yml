@@ -1,0 +1,20 @@
+name: Test allow-external-files flag
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Run OpenFGA model tests with allow-external-files
+        uses: .
+        with:
+          test_path: ./tests/fixtures/ext-file-tests
+          test_files_pattern: '*.fga.yaml'
+          fga_cli_allow_external_files: 'true'
+
+      - name: Assert action succeeded with allow-external-files
+        run: |
+          echo "PASS: OpenFGA model tests with allow-external-files completed successfully"
