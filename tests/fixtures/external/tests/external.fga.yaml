@@ -1,0 +1,13 @@
+name: External model test
+model_file: ../model.fga
+tuples:
+  - user: user:anne
+    relation: viewer
+    object: document:1
+tests:
+  - name: viewer-check
+    check:
+      - user: user:anne
+        object: document:1
+        assertions:
+          viewer: true

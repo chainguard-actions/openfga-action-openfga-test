@@ -1,0 +1,25 @@
+name: Basic passing test
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type document
+    relations
+      define viewer: [user]
+tuples:
+  - user: user:anne
+    relation: viewer
+    object: document:1
+tests:
+  - name: viewer-check
+    check:
+      - user: user:anne
+        object: document:1
+        assertions:
+          viewer: true
+      - user: user:bob
+        object: document:1
+        assertions:
+          viewer: false

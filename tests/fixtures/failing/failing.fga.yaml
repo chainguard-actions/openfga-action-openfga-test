@@ -1,0 +1,21 @@
+name: Failing test
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type document
+    relations
+      define viewer: [user]
+tuples:
+  - user: user:anne
+    relation: viewer
+    object: document:1
+tests:
+  - name: wrong-assertion
+    check:
+      - user: user:bob
+        object: document:1
+        assertions:
+          viewer: true

@@ -1,0 +1,27 @@
+name: Test path beginning with dash
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create dash-prefixed directory
+        run: |
+          mkdir -p -- "$GITHUB_WORKSPACE/-dash-dir"
+          cp tests/fixtures/passing/basic.fga.yaml "$GITHUB_WORKSPACE/-dash-dir/"
+      - id: action
+        uses: .
+        with:
+          test_path: '-dash-dir'
+      - name: Assert success
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          rm -rf -- "$GITHUB_WORKSPACE/-dash-dir"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected success"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,23 @@
+name: Second passing test
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type folder
+    relations
+      define owner: [user]
+      define viewer: [user] or owner
+tuples:
+  - user: user:carl
+    relation: owner
+    object: folder:x
+tests:
+  - name: owner-implies-viewer
+    check:
+      - user: user:carl
+        object: folder:x
+        assertions:
+          owner: true
+          viewer: true

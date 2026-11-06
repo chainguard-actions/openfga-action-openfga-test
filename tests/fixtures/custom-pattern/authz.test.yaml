@@ -1,0 +1,21 @@
+name: Custom pattern test
+model: |
+  model
+    schema 1.1
+
+  type user
+
+  type document
+    relations
+      define editor: [user]
+tuples:
+  - user: user:dana
+    relation: editor
+    object: document:2
+tests:
+  - name: editor-check
+    check:
+      - user: user:dana
+        object: document:2
+        assertions:
+          editor: true
