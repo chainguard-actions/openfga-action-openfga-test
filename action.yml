@@ -55,12 +55,12 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Install OpenFGA CLI
-      uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+      uses: chainguard-actions/jaxxstorm-action-install-gh-release@ce63271258ce8271a4caf20ba907536f30031a84 # v3.0.0
       with:
         repo: openfga/cli
         tag: ${{ inputs.fga_cli_version }}
         cache: enable
-    - uses: chrisdickinson/setup-yq@3d931309f27270ebbafd53f2daee773a82ea1822 # v1.0.1
+    - uses: chainguard-actions/chrisdickinson-setup-yq@082e6bb1a1e8376cf1a3a2e8c6a75b050974824a # v1.0.1
       with:
         yq-version: v4.25.3
     - name: Run OpenFGA CLI
